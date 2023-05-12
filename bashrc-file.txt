@@ -1,0 +1,51 @@
+# exit code of last process
+PS1='$(ret=$?;(($ret!=0)) && echo "\[${COLOR256[0]}\]($ret) \[${COLOR256[256]}\]")'
+
+# username (red for root)
+PS1+='\[${PROMPT_COLORS[0]}\]\[${COLOR256[257]}\]$(((UID==0)) && echo "\[${COLOR256[0]}\]")\u\[${COLOR256[256]}\]@'
+
+# hostname
+PS1+='\[${PROMPT_COLORS[3]}\]\h'
+
+# optional git branch
+PS1+='$(branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); [[ -n $branch ]] && echo "\[${PROMPT_COLORS[2]}\](\[${PROMPT_COLORS[3]}\]git:$branch\[${PROMPT_COLORS[2]}\])")'
+
+# prompt character
+PS1+='\[${PROMPT_COLORS[0]}\]\$\[${COLOR256[256]}:\] '
+
+# Shell Options
+shopt -s cdspell
+shopt -s checkwinsize
+
+shopt -s dirspell 2>/dev/null || true
+
+set_prompt_colors() {
+	local h=${1:-0}
+	local color=
+	local i=0
+	local j=0
+	for i in {22..231}; do
+		((i % 30 == h)) || continue
+
+		color=${COLOR256[$i]}
+		# cache the tput colors
+		if [[ -z $color ]]; then
+			COLOR256[$i]=$(tput setaf "$i")
+			color=${COLOR256[$i]}
+		fi
+		PROMPT_COLORS[$j]=$color
+		((j++))
+	done
+}
+
+set_prompt_colors 24
+
+# Colors for grep
+grep --color=auto < /dev/null &>/dev/null && alias grep='grep --color=auto'
+
+# Enable color support of ls
+if ls --color=auto &>/dev/null; then
+	alias ls='ls -p --color=auto'
+else
+	alias ls='ls -p -G'
+fi
